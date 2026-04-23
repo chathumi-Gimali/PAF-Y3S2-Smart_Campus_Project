@@ -1,3 +1,5 @@
+import NotificationBell from "./NotificationBell";
+
 export default function Sidebar({ activePage, setActivePage, user, setUser }) {
   const { role, name } = user;
 
@@ -44,6 +46,7 @@ export default function Sidebar({ activePage, setActivePage, user, setUser }) {
       position: "sticky",
       top: 0
     }}>
+
       {/* Logo */}
       <div style={{
         padding: "0 20px 24px",
@@ -100,26 +103,40 @@ export default function Sidebar({ activePage, setActivePage, user, setUser }) {
         ))}
       </nav>
 
-      {/* User Info + Logout */}
+      {/* Bottom Section */}
       <div style={{
         padding: "16px 20px",
         borderTop: "1px solid rgba(255,255,255,0.15)"
       }}>
+
+        {/* User Info */}
         <div style={{
-          display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px"
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between", marginBottom: "12px"
         }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.2)", display: "flex",
-            alignItems: "center", justifyContent: "center", fontSize: "16px"
-          }}>
-            {roleIcons[role]}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "50%",
+              background: "rgba(255,255,255,0.2)", display: "flex",
+              alignItems: "center", justifyContent: "center", fontSize: "16px"
+            }}>
+              {roleIcons[role]}
+            </div>
+            <div>
+              <div style={{ color: "white", fontSize: "13px", fontWeight: "600" }}>
+                {name}
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>
+                {role}
+              </div>
+            </div>
           </div>
-          <div>
-            <div style={{ color: "white", fontSize: "13px", fontWeight: "600" }}>{name}</div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>{role}</div>
-          </div>
+
+          {/* 🔔 Notification Bell — top right of user section */}
+          <NotificationBell userId={user.id} />
         </div>
+
+        {/* Logout Button */}
         <button
           onClick={() => setUser(null)}
           style={{

@@ -3,6 +3,7 @@ package com.smartcampus.service;
 import com.smartcampus.dto.BookingRequest;
 import com.smartcampus.model.Booking;
 import com.smartcampus.repository.BookingRepository;
+import com.smartcampus.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -12,6 +13,9 @@ public class BookingService {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public Booking createBooking(String userId, BookingRequest req) {
         List<Booking> conflicts = bookingRepository
@@ -29,7 +33,18 @@ public class BookingService {
         booking.setExpectedAttendees(req.getExpectedAttendees());
         booking.setStartTime(req.getStartTime());
         booking.setEndTime(req.getEndTime());
-        return bookingRepository.save(booking);
+
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify user that booking was created
+        notificationService.createNotification(
+            userId,
+            "Booking Submitted 📅",
+            "Your booking for " + req.getResourceId() + " is pending approval.",
+            "BOOKING_PENDING"
+        );
+
+        return saved;
     }
 
     public List<Booking> getAllBookings() {
@@ -50,7 +65,17 @@ public class BookingService {
         if (!booking.getStatus().equals("PENDING"))
             throw new RuntimeException("Only PENDING bookings can be approved");
         booking.setStatus("APPROVED");
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify user
+        notificationService.createNotification(
+            booking.getUserId(),
+            "Booking Approved ✅",
+            "Your booking for " + booking.getResourceId() + " has been approved!",
+            "BOOKING_APPROVED"
+        );
+
+        return saved;
     }
 
     public Booking rejectBooking(String id, String reason) {
@@ -59,7 +84,17 @@ public class BookingService {
             throw new RuntimeException("Only PENDING bookings can be rejected");
         booking.setStatus("REJECTED");
         booking.setRejectionReason(reason);
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify user
+        notificationService.createNotification(
+            booking.getUserId(),
+            "Booking Rejected ❌",
+            "Your booking for " + booking.getResourceId() + " was rejected. Reason: " + reason,
+            "BOOKING_REJECTED"
+        );
+
+        return saved;
     }
 
     public Booking cancelBooking(String id, String userId) {
@@ -69,7 +104,17 @@ public class BookingService {
         if (!booking.getStatus().equals("APPROVED"))
             throw new RuntimeException("Only APPROVED bookings can be cancelled");
         booking.setStatus("CANCELLED");
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify user
+        notificationService.createNotification(
+            userId,
+            "Booking Cancelled 🚫",
+            "Your booking for " + booking.getResourceId() + " has been cancelled.",
+            "BOOKING_CANCELLED"
+        );
+
+        return saved;
     }
 
     public void deleteBooking(String id) {
