@@ -12,34 +12,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Java 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Build with Maven
         working-directory: ./Booking-Service
-        run: ./mvnw clean package -DskipTests
+        run: chmod +x mvnw && ./mvnw clean package -DskipTests
 
   frontend:
     name: Build React Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: ./booking-frontend
+        working-directory: ./Booking-Frontend
         run: npm install
 
       - name: Build frontend
-        working-directory: ./booking-frontend
+        working-directory: ./Booking-Frontend
         run: npm run build
