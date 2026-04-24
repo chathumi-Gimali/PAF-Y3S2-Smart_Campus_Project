@@ -31,13 +31,45 @@ export default function CreateBooking({ user, setActivePage }) {
   const isStudent = user.role === "STUDENT";
   const needsJustification = isStudent && isRestricted;
 
+  // Get current datetime for min attribute
+  const now = new Date();
+  const minDateTime = now.toISOString().slice(0, 16);
+
   const validate = () => {
+    const nowDate = new Date();
+    const start = new Date(form.startTime);
+    const end = new Date(form.endTime);
+
+    // Check if start time is in the past
+    if (start < nowDate) {
+      return "⏰ Start time cannot be in the past!";
+    }
+
+    // Check if end time is before or equal to start time
+    if (end <= start) {
+      return "⏰ End time must be after start time!";
+    }
+
+    // Check minimum booking duration (30 mins)
+    const diffMins = (end - start) / (1000 * 60);
+    if (diffMins < 30) {
+      return "⏰ Booking must be at least 30 minutes long!";
+    }
+
+    // Check maximum booking duration (8 hours)
+    const diffHours = diffMins / 60;
+    if (diffHours > 8) {
+      return "⏰ Booking cannot exceed 8 hours!";
+    }
+
+    // Student restrictions for restricted facilities
     if (needsJustification) {
       if (parseInt(form.expectedAttendees) < 10)
-        return "Students need at least 10 attendees to book this facility.";
+        return "👥 Students need at least 10 attendees to book this facility.";
       if (!form.reason.trim())
-        return "Please provide a specific reason for booking this facility.";
+        return "📝 Please provide a specific reason for booking this facility.";
     }
+
     return null;
   };
 
@@ -73,6 +105,7 @@ export default function CreateBooking({ user, setActivePage }) {
     border: "1.5px solid #e0e0e0", fontSize: "14px", outline: "none",
     background: "white", fontFamily: "inherit"
   };
+
   const labelStyle = {
     fontSize: "13px", fontWeight: "600", color: "#444",
     marginBottom: "6px", display: "block"
@@ -98,6 +131,19 @@ export default function CreateBooking({ user, setActivePage }) {
         </div>
       )}
 
+      {/* Booking Rules */}
+      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "12px", padding: "12px 18px", marginBottom: "20px" }}>
+        <div style={{ fontWeight: "700", color: "#065f46", marginBottom: "4px" }}>
+          📅 Booking Rules
+        </div>
+        <div style={{ fontSize: "12px", color: "#065f46", lineHeight: "1.8" }}>
+          ✅ Must be a future date and time<br />
+          ✅ Minimum booking duration: 30 minutes<br />
+          ✅ Maximum booking duration: 8 hours<br />
+          ✅ End time must be after start time
+        </div>
+      </div>
+
       <div style={{ background: "white", borderRadius: "16px", padding: "32px", maxWidth: "620px", boxShadow: "0 2px 12px rgba(37,99,235,0.08)" }}>
 
         {/* Booking as */}
@@ -117,6 +163,7 @@ export default function CreateBooking({ user, setActivePage }) {
         )}
 
         <form onSubmit={handleSubmit}>
+
           {/* Resource Select */}
           <div style={{ marginBottom: "20px" }}>
             <label style={labelStyle}>Select Resource</label>
@@ -177,7 +224,9 @@ export default function CreateBooking({ user, setActivePage }) {
           <div style={{ marginBottom: "20px" }}>
             <label style={labelStyle}>
               Expected Attendees
-              {needsJustification && <span style={{ color: "#ef4444", marginLeft: "4px" }}>(min. 10 required)</span>}
+              {needsJustification && (
+                <span style={{ color: "#ef4444", marginLeft: "4px" }}>(min. 10 required)</span>
+              )}
             </label>
             <input style={inputStyle} type="number"
               min={needsJustification ? 10 : 1}
@@ -202,15 +251,31 @@ export default function CreateBooking({ user, setActivePage }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
             <div>
               <label style={labelStyle}>Start Time</label>
-              <input style={inputStyle} type="datetime-local"
+              <input
+                style={inputStyle}
+                type="datetime-local"
+                min={minDateTime}
                 value={form.startTime}
-                onChange={e => setForm({ ...form, startTime: e.target.value })} required />
+                onChange={e => setForm({ ...form, startTime: e.target.value })}
+                required
+              />
+              <div style={{ fontSize: "11px", color: "#aaa", marginTop: "4px" }}>
+                Must be a future time
+              </div>
             </div>
             <div>
               <label style={labelStyle}>End Time</label>
-              <input style={inputStyle} type="datetime-local"
+              <input
+                style={inputStyle}
+                type="datetime-local"
+                min={form.startTime || minDateTime}
                 value={form.endTime}
-                onChange={e => setForm({ ...form, endTime: e.target.value })} required />
+                onChange={e => setForm({ ...form, endTime: e.target.value })}
+                required
+              />
+              <div style={{ fontSize: "11px", color: "#aaa", marginTop: "4px" }}>
+                Must be after start time
+              </div>
             </div>
           </div>
 
@@ -218,7 +283,8 @@ export default function CreateBooking({ user, setActivePage }) {
             width: "100%", padding: "13px",
             background: loading ? "#93c5fd" : "linear-gradient(135deg, #1e3a8a, #2563eb)",
             color: "white", border: "none", borderRadius: "10px",
-            fontSize: "15px", fontWeight: "700", cursor: loading ? "not-allowed" : "pointer",
+            fontSize: "15px", fontWeight: "700",
+            cursor: loading ? "not-allowed" : "pointer",
             fontFamily: "inherit"
           }}>
             {loading ? "⏳ Submitting..." : "📅 Submit Booking Request"}
